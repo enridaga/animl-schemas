@@ -1,0 +1,46 @@
+PREFIX fx:   <http://sparql.xyz/facade-x/ns/>
+PREFIX xyz:  <http://sparql.xyz/facade-x/data/>
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+PREFIX owl:  <http://www.w3.org/2002/07/owl#>
+PREFIX ex:  <http://www.example.org/data#>
+PREFIX ont:  <http://www.example.org/ontology#>
+
+
+CONSTRUCT {
+    ?Class a owl:Class ; rdfs:label ?ClassName .
+    
+    ?property a owl:DatatypeProperty ; rdfs:domain ?Class.
+    
+    #?Class rdfs:subClassOf 
+    ?SequenceRefClass a owl:ObjectProperty ; rdfs:domain ?Class.
+
+} where {
+    service <x-sparql-anything:> {
+        fx:properties fx:location ?_file ; fx:media-type "application/xml" .
+        [ a xsd:complexType ;
+            xyz:name ?ClassName ;
+            fx:anySlot ?includes 
+        ]
+        
+        # xsd:attribute
+        optional { ?includes a xsd:attribute ; xyz:name ?propertyName . bind("attribute" as ?propertyType)}
+        
+        # xsd:sequence
+        optional {
+            ?includes a xsd:sequence .
+            optional {
+                ?includes fx:anySlot/xyz:ref ?sequenceRef .
+                [ xyz:name ?sequenceRef ; xyz:type ?sequenceRefType ]
+            }
+        }
+        # xsd:attributeGroup
+        
+    }
+    
+    BIND(fx:entity(ont:, ?ClassName) as ?Class)
+    BIND(fx:entity(ont:, ?propertyName) as ?property)
+    BIND(fx:entity(ont:, ?sequenceRefType) as ?SequenceRefClass)
+    
+}
